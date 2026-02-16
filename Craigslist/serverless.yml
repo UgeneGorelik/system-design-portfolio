@@ -1,0 +1,121 @@
+service: craigslist-serverless
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: us-east-1
+  stage: dev
+  environment:
+    POSTS_TABLE: PostsTable
+    USERS_TABLE: UsersTable
+    REPORTS_TABLE: ReportsTable
+    CACHE_ENDPOINT: ${env:CACHE_ENDPOINT}
+    IMAGES_BUCKET: craigslist-images
+    EVENT_STREAM: PostsStream
+
+functions:
+  backend:
+    handler: app.lambda_handler
+    events:
+      - httpApi:
+          path: /{proxy+}
+          method: any
+
+resources:
+  Resources:
+
+    ################################
+    # DynamoDB Tables (SQL / Serverless)
+    ################################
+    PostsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: PostsTable
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: UsersTable
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+    ReportsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ReportsTable
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+    ################################
+    # Redis Cache (ElastiCache)
+    ################################
+    RedisCache:
+      Type: AWS::ElastiCache::CacheCluster
+      Properties:
+        CacheNodeType: cache.t3.micro
+        Engine: redis
+        NumCacheNodes: 1
+        ClusterName: craigslist-cache
+
+    ################################
+    # S3 Bucket + CloudFront CDN (Images)
+    ################################
+    ImagesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: craigslist-images
+
+    ImagesCDN:
+      Type: AWS::CloudFront::Distribution
+      Properties:
+        DistributionConfig:
+          Enabled: true
+          Origins:
+            - DomainName: !GetAtt ImagesBucket.DomainName
+              Id: S3Origin
+              S3OriginConfig: {}
+          DefaultCacheBehavior:
+            TargetOriginId: S3Origin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+
+    ################################
+    # Event Queue (Kinesis for async posts)
+    ################################
+    PostsStream:
+      Type: AWS::Kinesis::Stream
+      Properties:
+        Name: PostsStream
+        ShardCount: 1
+
+    ################################
+    # CloudWatch Logs (Monitoring)
+    ################################
+    BackendLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/craigslist-backend
+        RetentionInDays: 14
+
+plugins:
+  - serverless-python-requirements
