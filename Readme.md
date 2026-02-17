@@ -1,210 +1,189 @@
-System Design Portfolio
-🚀 Purpose of This Repository
+# 🏗 System Design Portfolio
 
-This repository documents my structured practice and exploration of large-scale system design.
+## 🚀 Purpose
 
-The goal is to:
+This repository documents structured exploration and practice of large-scale system design.
 
-Develop deep intuition for distributed systems
+Goals:
 
-Practice designing scalable, reliable architectures
+- Develop intuition for distributed systems  
+- Design scalable, reliable architectures  
+- Explore trade-offs between technologies and patterns  
+- Evaluate failure scenarios and robustness  
+- Prepare for senior-level system design interviews  
+- Build a public record of architectural thinking  
 
-Explore trade-offs between different technologies and patterns
+Each system is treated as a real production system, including requirements analysis, scaling strategy, trade-offs, and failure handling. This repository focuses on architectural reasoning rather than production-ready implementation.
 
-Prepare for senior-level system design interviews
+---
 
-Build a public record of architectural thinking
+## 📂 Repository Structure
 
-Each system in this repository is treated as if it were a real production system — including requirements analysis, trade-offs, scaling strategies, and failure handling.
+### `/designs`
 
-📂 Repository Structure
-
-Each folder inside designs/ represents a complete system design.
+Each folder represents a complete system design.  
 
 Example:
 
 designs/
-  ├── url-shortener/
-  ├── realtime-chat/
-  ├── online-code-editor/
-  └── event-driven-order-system/
+├── url-shortener/
+├── realtime-chat/
+├── online-code-editor/
+└── event-driven-order-system/
 
 
-Each system folder contains multiple files documenting the full design process.
+Each system contains multiple files documenting the full design process, broken into explicit architectural phases.
 
-📁 System Design Phases
-01-requirements.md
+---
 
-Defines the problem and constraints.
+## 📐 System Design Phases
 
-This file clarifies:
+### 01 — Requirements
+Defines problem and constraints:
 
-What the system must do (functional requirements)
+- Functional requirements  
+- Non-functional requirements (performance, availability, scale)  
+- Scope boundaries  
 
-Performance, availability, and scale expectations (non-functional requirements)
+### 02 — Entities
+Defines core domain model:
 
-It establishes boundaries before any architectural decisions are made.
+- Primary objects  
+- Relationships  
+- Persistent vs transient data  
 
-02-entities.md
+### 03 — API Design
+Defines external system contract:
 
-Defines the core domain model.
+- Endpoints  
+- Request/response formats  
+- Authentication & authorization  
+- Idempotency and validation rules  
 
-Identifies:
+### 04 — Database Design
+Defines storage strategy:
 
-Primary objects in the system
+- SQL vs NoSQL rationale  
+- Schema design  
+- Indexing  
+- Partitioning/sharding  
+- Data growth estimation  
 
-Relationships between them
+### 05 — High-Level Architecture
+Defines components and data flow:
 
-Persistent vs transient data
+- Major services  
+- Infrastructure components  
+- Caching layers  
+- Messaging systems (if applicable)  
+- Request lifecycle diagrams  
 
-This step ensures clarity before designing APIs or storage.
+### 06 — Scaling Strategy
+Explains handling of growth:
 
-03-api-design.md
+- Horizontal scaling  
+- Load distribution  
+- Hotspot mitigation  
+- Read/write separation  
+- Caching strategies  
+- Multi-region considerations  
 
-Defines the external contract of the system.
+### 07 — Failure Scenarios
+Analyzes resilience:
 
-Specifies:
+- Node failures  
+- Network partitions  
+- Data inconsistencies  
+- Retry strategies  
+- Circuit breakers  
+- Disaster recovery  
 
-Endpoints
+### 08 — Trade-offs
+Documents architectural decisions:
 
-Request/response formats
+- Technology choices and rationale  
+- Alternatives considered  
+- Limitations of design  
+- Future improvements  
 
-Authentication and authorization
+---
 
-Idempotency and validation rules
+## 🧩 `/patterns`
+Reusable architecture building blocks:
 
-API design is completed before implementation details to ensure interface-first thinking.
+- Event Sourcing  
+- CQRS  
+- Consistent Hashing  
+- Rate Limiting  
+- Circuit Breaker  
+- Leader Election  
+- Distributed Locking  
+- CRDT vs OT  
+- Write-through vs Write-back caching  
 
-04-database-design.md
+---
 
-Defines data storage strategy.
-
-Includes:
-
-Database choice rationale (SQL vs NoSQL)
-
-Schema design
-
-Indexing strategy
-
-Partitioning / sharding plan
-
-Data growth estimation
-
-This document explains how the system persists and retrieves data at scale.
-
-05-high-level-architecture.md
-
-Defines system components and data flow.
-
-Includes:
-
-Major services
-
-Infrastructure components
-
-Caching layers
-
-Messaging systems (if applicable)
-
-Request lifecycle diagrams
-
-This represents the first complete architectural view.
-
-06-scaling-strategy.md
-
-Explains how the system handles growth.
-
-Covers:
-
-Horizontal scaling
-
-Load distribution
-
-Hotspot mitigation
-
-Caching strategies
-
-Read/write separation
-
-Multi-region considerations (if applicable)
-
-This document stress-tests the architecture.
-
-07-failure-scenarios.md
-
-Analyzes resilience and fault tolerance.
-
-Explores:
-
-Node failures
-
-Network partitions
-
-Data inconsistencies
-
-Retry strategies
-
-Circuit breakers
-
-Disaster recovery
-
-This step evaluates system robustness under failure conditions.
-
-08-tradeoffs.md
-
-Documents architectural decisions and alternatives.
-
-Explains:
-
-Why specific technologies were chosen
-
-Alternatives that were considered
-
-Limitations of the chosen design
-
-Future improvements
-
-Each system is broken into explicit architectural phases to reflect real-world engineering workflows.
-
-📁 /patterns
-
-Reusable architecture building blocks referenced across system designs:
-
-Event Sourcing
-
-CQRS
-
-Consistent Hashing
-
-Rate Limiting
-
-Circuit Breaker
-
-Leader Election
-
-Distributed Locking
-
-CRDT vs OT
-
-Write-through vs Write-back caching
-
-And other distributed system patterns
-
-This directory serves as a knowledge base for architectural decisions and recurring design components.
-
-
-/infrastructure
-
-This directory contains Infrastructure-as-Code (IaC) examples that demonstrate how selected system designs could be deployed in real-world environments.
-
-The goal is to bridge architecture design with practical deployment strategies.
-
-Example structure:
+## 🏗 `/infrastructure`
+Infrastructure-as-Code (IaC) examples for deploying designs:
 
 infrastructure/
-  ├── serverless-url-shortener/
-  │     ├── main.tf
-  │     ├── variables.tf
-  │     ├── outputs.tf
-  │     └── README.md
+├── serverless-url-shortener/
+│ ├── main.tf
+│ ├── variables.tf
+│ ├── outputs.tf
+│ └── README.md
+
+
+
+Bridges architecture with real-world deployment.
+
+---
+
+## 🧠 Architectural Principles
+
+- Horizontal scalability  
+- Clear service boundaries  
+- Separation of read/write paths  
+- Event-driven patterns where appropriate  
+- Eventual consistency when acceptable  
+- Failure-aware design  
+- Observability-first mindset  
+- Explicit trade-off documentation  
+
+---
+
+## 🚀 How to Navigate
+
+1. **Start with Requirements** – Read `Requirements.md` to understand system scope, scale assumptions, latency and availability goals, and constraints.  
+2. **Review High-Level Architecture** – See `HLDDiagram.png` and `OverallDesign.md` to understand core components, service boundaries, read/write separation, storage decisions, scaling approach, and trade-offs.  
+3. **Explore Subsystems** – Dive deeper into:
+   - `Db-Schema.md` → Database modeling  
+   - `Caching_and_Cdn.md` → Cache layers and CDN strategy  
+   - `Api.md` → Public API design  
+   - `FlowDiagrams.md` → Request lifecycle breakdown  
+   - `MonitoringAlerting.md` → Observability and alerting planning  
+4. **Event-Driven Variant** – Optional asynchronous design with queue-based ingestion: see `OptionalHldWithKafka.png`.  
+5. **Run Minimal Backend Example (Optional)** – For demonstration purposes:
+   - Requirements: Python 3.9+  
+   - Run locally:  
+     ```bash
+     python server_code_simple_example.py
+     ```  
+   - Deploy via Serverless (if AWS credentials configured):  
+     ```bash
+     npm install -g serverless
+     serverless deploy
+     ```  
+
+---
+
+## 🎯 Intended Use
+
+This repository is intended for:
+
+- System design interview preparation  
+- Portfolio demonstration of architectural thinking  
+- Reference for scalable backend patterns  
+- Structured approach to distributed systems  
+
+---
