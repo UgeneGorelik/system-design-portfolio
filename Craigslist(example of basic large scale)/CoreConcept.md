@@ -1,89 +1,120 @@
-Lambda Architecture Explained
+🔹 Large-Scale System Design Concepts
 
-Lambda Architecture is a data processing design pattern that allows a system to process large volumes of data efficiently, while providing both accuracy and low-latency responses.
+These are the main strategies and building blocks for designing high-scale, reliable systems.
 
-It is commonly used in big-data applications, like news feeds, analytics dashboards, recommendation engines, or log processing.
+1️⃣ Throttling
 
-Why Lambda Architecture?
+Purpose: Prevent overload and protect critical services.
 
-You want historical accuracy (all data accounted for)
+Limits the number of requests a client or service can make in a given time window.
 
-You want fast, up-to-date results for users (low latency)
+Protects databases, caches, and downstream services from spikes.
 
-You want the system to be fault-tolerant and scalable
+Common strategies:
 
-The Three Layers
+Token Bucket / Leaky Bucket – allow bursts but control sustained rate.
 
-Lambda Architecture divides the system into three layers:
+Fixed Window / Sliding Window – simple counters per time interval.
 
-1️⃣ Batch Layer
+Example: Limiting users to 10 feed fetch requests per second.
 
-Purpose: Stores all raw data and computes precomputed results.
+Why it matters at scale: Without throttling, sudden spikes can take down your backend or cause cascading failures.
 
-Data: Immutable (never deleted or updated, just appended).
+2️⃣ Queuing (Message Queues / Asynchronous Processing)
 
-Processing: Runs periodically (e.g., hourly, daily) using batch jobs.
+Purpose: Decouple services and handle bursts.
 
-Example in a news feed:
+Incoming requests or jobs are placed into a queue.
 
-Every post ever created is stored in HDFS.
+Downstream workers poll or subscribe and process jobs at their own rate.
 
-A batch ETL job computes the full feed for each user.
+Benefits:
 
-Output is stored in Redis for fast retrieval.
+Smooths traffic spikes
 
-Pros:
+Enables asynchronous processing
 
-Very accurate
+Improves reliability and failure isolation
 
-Handles huge data volumes
+Common tools: Kafka, RabbitMQ, SQS, Google Pub/Sub
 
-Cons:
+Example:
 
-High latency (you don’t see new posts instantly)
+Content ingestion → moderation → queue → feed processor
 
-2️⃣ Speed / Real-Time Layer
+3️⃣ Caching
 
-Purpose: Handles new or streaming data to provide low-latency updates.
+Purpose: Reduce latency and load on databases or APIs.
 
-Data: Only the most recent data since the last batch run.
+Store frequently-read data closer to the client or service.
 
-Processing: Uses streaming frameworks (Kafka, Spark Streaming, Flink).
+Types:
 
-Example in a news feed:
+In-memory cache: Redis, Memcached
 
-A new post arrives → goes through moderation → triggers real-time processing.
+CDN: CloudFront, Akamai
 
-Updates feeds for affected users immediately.
+Caching strategies:
 
-Pros:
+Write-through: Cache updated at the same time as DB
 
-Low latency, users see new content fast
+Write-back: DB updated asynchronously, cache is source of truth temporarily
 
-Cons:
+Cache eviction policies: LRU (Least Recently Used), TTL (time-to-live)
 
-Usually approximate or partial (not the full dataset)
+Example:
 
-3️⃣ Serving Layer
+Store latest news feed items in Redis for fast retrieval
 
-Purpose: Combines batch and speed layer outputs for queries.
+Avoid hitting HDFS or DB for every request
 
-Example in a news feed:
+4️⃣ Exponential Retry
 
-Backend1 fetches the precomputed feed from Redis (batch)
+Purpose: Improve reliability without overloading systems.
 
-Merges with any new posts from speed layer
+When a request fails (due to network, downstream service, etc.), retry with increasing delays.
 
-Serves a fresh, complete feed to the user
+Often combined with jitter to avoid thundering herd problems.
 
-Key Benefit: Users see accurate historical data + new content instantly
+Pattern:
 
-Key Principles
+retry_delay = base_delay * 2 ^ attempt_number + random_jitter
 
-Immutability: Batch layer stores all data in an append-only log.
 
-Fault Tolerance: If the speed layer fails, batch results can recompute everything.
+Why it matters: Helps transient failures recover gracefully without cascading overloads.
 
-Scalability: Batch and speed layers scale independently.
+5️⃣ Distributed Databases
 
-Separation of Concerns: Batch for correctness, speed for freshness.
+Purpose: Store massive amounts of data reliably across multiple nodes and regions.
+
+Concepts:
+
+Sharding / Partitioning – split data across multiple nodes
+
+Replication – maintain multiple copies for fault tolerance
+
+Consistency models:
+
+Strong consistency → all replicas immediately consistent
+
+Eventual consistency → replicas converge over time
+
+Examples: Cassandra, DynamoDB, CockroachDB, MongoDB (sharded)
+
+Trade-offs: CAP theorem – you can’t have Consistency, Availability, and Partition tolerance all at the same time.
+
+6️⃣ Other Core Scaling Patterns
+
+Rate Limiting – protect services at the edge (API Gateway)
+
+Load Balancing – distribute traffic across multiple service instances
+
+Circuit Breakers – prevent retries from overwhelming a failing service
+
+Bulkheads / Isolation – isolate failures to prevent system-wide crashes
+
+Event Sourcing – record state changes as a sequence of events (good for auditing, high-scale writes)
+
+CQRS (Command Query Responsibility Segregation) – separate read/write models for efficiency at scale
+
+Partition-tolerant messaging – ensure messages aren’t lost during node failures
