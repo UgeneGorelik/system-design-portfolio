@@ -28,7 +28,7 @@ REQUESTS = {}
 RATE_LIMIT = 5  # max requests per 10 seconds per IP
 TIME_WINDOW = 10
 
-app = FastAPI(title="Craigslist-style Backend")
+app = FastAPI(title="Craigslist(example of basic large scale)-style Backend")
 
 class Post(BaseModel):
     title: str
