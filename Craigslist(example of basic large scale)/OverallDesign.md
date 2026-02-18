@@ -1,70 +1,156 @@
-Components of Craigslist-Like System 
-1️⃣ Clients / Frontend
+Craigslist-Style System Design – Summary
+Problem Statement
 
-Web browsers, mobile apps
+Design a large-scale online classifieds platform (like Craigslist) that allows users to:
 
-Sends HTTP requests to backend
+Post listings (items, jobs, services, housing, etc.)
 
-Displays posts, images, search results, user forms
+Search listings by keywords, category, location, and filters
 
-2️⃣ GeoDNS / Regional Routing
+Browse and view listings
 
-Routes users to the nearest regional server/data center
+Optionally message sellers
 
-Ensures low latency, high availability, and local post prioritization
+Scale: millions of listings, high read/write throughput
 
-Works with regional caches and DB replicas
+Requirements
+Functional
 
-3️⃣ Backend / API Servers
+User registration and authentication
 
-Stateless application servers
+CRUD for listings
 
-Handles all business logic synchronously:
+Search and browse by category/location/filters
 
-Post creation, update, deletion
+Optional messaging between users
 
-User signup/login
+Display top listings / trending posts
 
-Post auto-expiration (via scheduled jobs or cron tasks)
+Non-Functional
 
-Reporting / moderation
+High availability
 
-Horizontal scaling possible per region
+Low-latency search (<100ms)
 
-4️⃣ SQL Database
+Horizontal scalability
 
-Stores structured data:
+Durable storage for millions of listings
 
-Users
+Handling high read traffic
 
-Posts metadata (denormalized)
+High-Level Architecture
 
-Reports
+Two main flows:
 
-Supports replication / sharding for scale
+Write / Ingestion Path
 
-Post auto-deletion handled by backend jobs
+Users create, update, or delete listings
 
-5️⃣ Cache Layer
+Listings stored in primary database (SQL or NoSQL)
 
-Optional in-memory cache (Redis / Memcached)
+Images uploaded to object storage (S3 / blob storage)
 
-Stores hot posts per region
+Read / Query Path
 
-Reduces database load and improves read performance
+Users browse or search listings
 
-6️⃣ Object Store (Images)
+Search queries served via search engine (Elasticsearch / Solr)
 
-Stores images for posts (S3, Azure Blob, or self-hosted)
+Optional caching for popular searches
 
-Backend stores image_address in DB
+Data Model
+Listing Table
+Column	Type	Notes
+listing_id	UUID / PK	Unique identifier
+user_id	FK	Owner of listing
+category	String	e.g., Jobs, Housing
+title	String	Listing title
+description	Text	Full description
+location	Geo-coordinates	City / Zip for search
+price	Decimal	Optional
+created_at	Timestamp	Post creation
+updated_at	Timestamp	Last update
+status	Enum	Active / Expired / Deleted
+Optional Supporting Tables
 
-Served via CDN for fast delivery
+Users: user_id, name, email, etc.
 
-Image processing (thumbnails, resizing) handled by backend
+Messages: sender_id, receiver_id, listing_id, message text, timestamp
 
-7️⃣ Monitoring & Observability
+Images: listing_id, image_url, metadata
 
-Logs, metrics, and alerts
+Search Architecture
 
-Tracks latency, errors, post expiration, and region health
+Elasticsearch / Solr: index listings for keyword + filter search
+
+Inverted index: fast retrieval by keywords
+
+Geospatial queries: support location-based search
+
+Ranking / Sorting: by date, popularity, or relevance
+
+Flow – Full CRUD + Search
+
+Create Listing
+
+User → API → Load balancer → Listing Service
+
+Listing stored in Primary DB
+
+Event triggered → Update Search Index
+
+Update / Delete Listing
+
+Similar flow; index updated or removed
+
+Search / Browse
+
+User query → Load balancer → Search Service
+
+Search Service queries search index → returns matching listings
+
+Optional caching for hot queries
+
+View Listing
+
+Listing details fetched from DB
+
+Images served from object storage (CDN for low latency)
+
+Messaging
+
+Optional: messaging service queues messages to recipient
+
+Stored in DB for history
+
+Scaling Considerations
+
+High Read vs Write Ratio
+
+Reads >> Writes
+
+Use Elasticsearch / Solr to offload reads from primary DB
+
+Database Choices
+
+Relational DB: consistent schema, strong relationships
+
+NoSQL / Document DB: fast writes, flexible schema for listings
+
+Caching
+
+Redis or Memcached for popular listings and searches
+
+Object Storage
+
+Images / attachments in S3 / Blob storage + CDN
+
+Partitioning / Sharding
+
+By category, region, or listing_id for horizontal scalability
+
+Eventual Consistency
+
+Search index may lag slightly behind DB updates
+
+Acceptable for most listings
