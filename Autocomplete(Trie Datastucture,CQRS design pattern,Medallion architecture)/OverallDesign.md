@@ -1,42 +1,173 @@
-Autocomplete / Typeahead System Design – Summary
-Overview
+Goal: Design an Autocomplete System
 
-An autocomplete system predicts and suggests completions for user input in real-time. It is a distributed system that continuously ingests massive amounts of user data and builds a compact, queryable structure for fast prefix lookups.
+Requirements:
 
-Key use cases:
+Return top suggestions as user types
 
-Search engines (Google, Bing, Baidu, Yandex)
+Low latency (<100ms)
 
-Internal search within a dataset (Wikipedia, video platforms)
+High QPS (every keystroke triggers request)
 
-Word processors (autocomplete, spellcheck)
+Ranked by popularity / relevance
 
-IDEs (variable names, constants)
+Real-time or near-real-time updates
 
-High-Level Architecture
+Highly available
 
-Two main flows:
+Examples:
 
-Data ingestion (write path)
+Search bars
 
-Collect raw search queries
+Product suggestions
 
-Preprocess, clean, and split strings
+Query suggestions (like Google)
 
-Aggregate frequencies
+E-commerce search (like Amazon)
 
-Store intermediate and aggregated tables
+🏗 High-Level Architecture
 
-Query serving (read path)
+Core components:
 
-User types a prefix
+Client (browser/mobile)
 
-System queries weighted trie in memory
+Load Balancer
 
-Returns top suggestions
+API Gateway
 
-Rollup / batch ETL jobs reduce storage and improve scalability:
+Autocomplete Service
 
-Hourly → daily → weekly → monthly aggregation
+Cache Layer (Redis)
 
-Keep only top frequent words to reduce data volume
+Search Data Store (Trie / index store)
+
+Analytics / Logging Service
+
+Offline Aggregation Pipeline
+
+🔁 Request Flow (Normal Operation)
+
+User types "iph"
+
+Client → API Gateway
+
+API Gateway → Cache (Redis)
+
+If cache hit → return suggestions
+
+If cache miss:
+
+Query Autocomplete Service
+
+Query data store (Trie / search index)
+
+Rank suggestions
+
+Store in cache
+
+Return results
+
+Log query
+
+📦 Data Storage Design
+
+Core challenge: Fast prefix lookup.
+
+Common structures:
+
+1️⃣ Trie (Prefix Tree)
+
+O(k) lookup (k = prefix length)
+
+Each node stores:
+
+children
+
+top N suggestions
+
+Data Update Flow
+
+Autocomplete data must update.
+
+Offline Pipeline
+
+Collect search logs
+
+Aggregate frequency
+
+Compute top suggestions
+
+Rebuild Trie
+
+Deploy new snapshot
+
+Often batch updated every few minutes or hours.
+
+Streaming updates possible but complex.
+
+🧠 Scalability
+Horizontal Scaling
+
+Stateless API servers
+
+Shared Redis cluster
+
+Sharded prefix ranges (a–m, n–z)
+
+Partitioning Strategy
+
+Shard by:
+
+First character
+
+Hash(prefix)
+
+Region
+
+🚦 Rate Limiting
+
+Because every keystroke triggers request:
+
+Debounce on client (300ms)
+
+Rate limit per IP
+
+Protect against bots
+
+🔥 Bottlenecks
+
+Memory (Trie can be huge)
+
+Cache hot keys
+
+Cold start after deployment
+
+Ranking recalculation cost
+
+🧩 Key Design Tradeoffs
+1️⃣ Precompute vs Compute On Demand
+
+Precompute:
+
+Faster
+
+More memory
+
+On demand:
+
+Less memory
+
+Higher latency
+
+2️⃣ Real-time vs Batch Updates
+
+Real-time:
+
+Complex
+
+Event streaming required
+
+Batch:
+
+Simpler
+
+Slightly stale results

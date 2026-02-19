@@ -1,63 +1,126 @@
-Problem Statement
+Design Amazon Dashboard Top 10 (Top 10 best-selling / trending products)
 
-Design a system that returns the top 10 products by sales volume in real time or near real time.
+Think of the homepage section like on Amazon showing:
 
-Input: sales events (user purchases with product IDs, quantity, timestamp)
+“Top 10 in Electronics”
 
-Output: list of top 10 products per category, region, or global
+“Trending Now”
 
-Scale: billions of events per day, millions of products
+“Best Sellers”
 
-Core Concepts
+This is essentially a real-time top-K aggregation system at massive scale.
 
-Stream of events
+🎯 Goal
 
-Each sale generates a record: (user_id, product_id, quantity, timestamp)
+Design a system that:
 
-System must ingest high-volume events continuously
+Shows Top 10 products
 
-Aggregation
+Updated near real-time
 
-Compute total sales per product
+Per category
 
-Maintain cumulative counts or running totals
+Per region
 
-Top-K selection
+Possibly personalized
 
-Keep only the top 10 products (per category/region/global)
+Extremely high read traffic
 
-Use efficient data structures for updates:
+Very high write/update rate (orders)
 
-Min-Heap (size K): O(log K) insert/update
+🏗 High-Level Architecture
 
-Optional approximate algorithms (Count-Min Sketch) for huge catalogs
+Core components:
 
-Serving queries
+Client
 
-Return top 10 products instantly for dashboards or APIs
+Load Balancer
 
-Precompute results in memory or cache for low-latency reads
+API Gateway
 
-Scaling Patterns
+Dashboard Service
 
-CQRS (Command/Query Separation)
+Cache Layer (Redis)
 
-Commands: ingest sales events
+Ranking Service
 
-Queries: serve top-K products
+Event Stream (orders)
 
-Event-driven / Streaming Architecture
+Aggregation / Stream Processing Layer
 
-Kafka / Kinesis for high-throughput event ingestion
+Persistent Store (NoSQL)
 
-Stream processors (Flink / Spark Streaming) maintain rolling counts
+🔁 Read Path (User Loads Dashboard)
 
-Batch Rollups
+Client → API Gateway
 
-Hourly / daily / weekly aggregation reduces storage
+API Gateway → Cache
 
-Only top-K per window retained
+If cache hit → return Top 10 list
 
-Caching Layer
+If cache miss:
 
-Redis / Memcached to store top-K per category/region for instant retrieval
+Query Ranking Store
+
+Return result
+
+Cache result (short TTL)
+
+Reads must be extremely fast (<50ms).
+
+🔁 Write Path (Order Happens)
+
+User buys item
+
+Order Service emits event
+
+Event pushed to stream (e.g., Apache Kafka)
+
+Stream processor updates counters
+
+Recompute Top 10 per category
+
+Update ranking store
+
+Invalidate cache
+
+🧠 Core Problem
+
+Efficiently maintain Top K (K=10) over massive stream.
+
+If naïve:
+
+Re-sorting entire dataset = impossible
+
+Instead use:
+
+1️⃣ Min Heap (size K)
+
+Per category:
+
+Maintain heap of top 10
+
+If new product count > min → replace
+
+Time complexity:
+O(log K) per update → very cheap
+
+
+Real-Time vs Batch
+Option 1: Real-Time Stream Processing
+
+Use:
+
+Kafka
+
+Stream processor (e.g., Apache Flink)
+
+Pros:
+
+Fresh data
+
+Dynamic trending
+
+Cons:
+
+More infra complexity
